@@ -1,0 +1,15 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+coverage
+.expo
+.env
+.env.local
+.env.development
+.env.production
+apps/api/src/generated/prisma
+*.log
+.DS_Store
+Thumbs.db
