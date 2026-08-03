@@ -27,7 +27,10 @@ import { api, getRequestError } from "@/lib/api";
 
 const schema = z.object({
   courseId: z.string().uuid("Pilih mata kuliah"),
-  finalScore: z.coerce.number().min(0).max(100),
+  finalScore: z
+    .number()
+    .min(0, "Nilai minimal 0")
+    .max(100, "Nilai maksimal 100"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -51,6 +54,7 @@ export default function GradesPage() {
     queryKey: ["courses"],
     queryFn: async () => {
       const response = await api.get<Course[]>("/courses");
+
       return response.data;
     },
   });
@@ -59,6 +63,7 @@ export default function GradesPage() {
     queryKey: ["grades"],
     queryFn: async () => {
       const response = await api.get<Grade[]>("/grades");
+
       return response.data;
     },
   });
@@ -67,6 +72,7 @@ export default function GradesPage() {
     queryKey: ["grades", "gpa"],
     queryFn: async () => {
       const response = await api.get<GpaSummary>("/grades/gpa");
+
       return response.data;
     },
   });
@@ -79,67 +85,82 @@ export default function GradesPage() {
         });
       }
 
-      return api.post("/grades", values);
+      return api.post("/grades", {
+        courseId: values.courseId,
+        finalScore: values.finalScore,
+      });
     },
     onSuccess: () => {
       toast.success(editing ? "Nilai diperbarui" : "Nilai ditambahkan");
+
       queryClient.invalidateQueries({
         queryKey: ["grades"],
       });
+
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
       });
+
       closeModal();
     },
-    onError: (error) => toast.error(getRequestError(error)),
+    onError: (error) => {
+      toast.error(getRequestError(error));
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/grades/${id}`),
     onSuccess: () => {
       toast.success("Nilai dihapus");
+
       queryClient.invalidateQueries({
         queryKey: ["grades"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
     },
-    onError: (error) => toast.error(getRequestError(error)),
+    onError: (error) => {
+      toast.error(getRequestError(error));
+    },
   });
 
-  const openCreate = () => {
-    const gradedCourseIds = new Set(
-      gradesQuery.data?.map((grade) => grade.courseId),
-    );
-    const availableCourse = coursesQuery.data?.find(
-      (course) => !gradedCourseIds.has(course.id),
-    );
+  const gradedCourseIds = new Set(
+    gradesQuery.data?.map((grade) => grade.courseId) ?? [],
+  );
 
+  const availableCourses =
+    coursesQuery.data?.filter((course) => !gradedCourseIds.has(course.id)) ??
+    [];
+
+  const openCreate = () => {
     setEditing(null);
+
     form.reset({
-      courseId: availableCourse?.id ?? "",
+      courseId: availableCourses[0]?.id ?? "",
       finalScore: 0,
     });
+
     setModalOpen(true);
   };
 
   const openEdit = (grade: Grade) => {
     setEditing(grade);
+
     form.reset({
       courseId: grade.courseId,
       finalScore: grade.finalScore ?? 0,
     });
+
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
+    form.reset(emptyValues);
   };
-
-  const gradedIds = new Set(
-    gradesQuery.data?.map((grade) => grade.courseId) ?? [],
-  );
-  const availableCourses =
-    coursesQuery.data?.filter((course) => !gradedIds.has(course.id)) ?? [];
 
   return (
     <div className="grid gap-8">
@@ -160,25 +181,31 @@ export default function GradesPage() {
           <p className="text-xs font-bold uppercase tracking-[0.17em] text-[#a8c5ba]">
             Indeks prestasi semester
           </p>
+
           <div className="mt-5 flex items-end gap-4">
             <p className="text-6xl font-extrabold tracking-[-0.07em]">
               {(gpaQuery.data?.gpa ?? 0).toFixed(2)}
             </p>
+
             <p className="pb-2 text-sm text-[#a8c5ba]">
               {gpaQuery.data?.semesterName ?? "Belum ada semester aktif"}
             </p>
           </div>
+
           <div className="mt-8 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-white/8 p-4">
               <p className="text-2xl font-extrabold">
                 {gpaQuery.data?.totalCredits ?? 0}
               </p>
+
               <p className="mt-1 text-xs text-[#a8c5ba]">Total SKS dinilai</p>
             </div>
+
             <div className="rounded-2xl bg-white/8 p-4">
               <p className="text-2xl font-extrabold">
                 {gpaQuery.data?.grades.length ?? 0}
               </p>
+
               <p className="mt-1 text-xs text-[#a8c5ba]">Mata kuliah</p>
             </div>
           </div>
@@ -188,9 +215,11 @@ export default function GradesPage() {
           <p className="text-xs font-bold uppercase tracking-[0.17em] text-[#7d8982]">
             Rumus
           </p>
+
           <p className="serif mt-5 text-3xl text-[#2b3a33]">
             IP = Σ(SKS × bobot) ÷ Σ SKS
           </p>
+
           <p className="mt-5 text-sm leading-7 text-[#717c76]">
             Hasil IP hanya menghitung mata kuliah yang sudah memiliki nilai
             akhir dan bobot.
@@ -204,7 +233,11 @@ export default function GradesPage() {
         <EmptyState
           icon={<ChartNoAxesColumnIncreasing />}
           title="Belum ada nilai"
-          description="Tambahkan nilai akhir mata kuliah untuk mulai menghitung IP."
+          description={
+            coursesQuery.data?.length
+              ? "Tambahkan nilai akhir mata kuliah untuk mulai menghitung IP."
+              : "Tambahkan mata kuliah terlebih dahulu sebelum mencatat nilai."
+          }
           action={
             availableCourses.length ? (
               <Button onClick={openCreate}>
@@ -230,41 +263,63 @@ export default function GradesPage() {
                   <th className="px-5 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
+
               <tbody>
                 {gradesQuery.data.map((grade) => (
                   <tr key={grade.id} className="border-t border-[#edf0eb]">
                     <td className="px-5 py-4">
-                      <p className="text-sm font-bold">{grade.course?.name}</p>
+                      <p className="text-sm font-bold">
+                        {grade.course?.name ?? "Mata kuliah"}
+                      </p>
+
                       <p className="mt-1 text-xs text-[#7b8680]">
-                        {grade.course?.code}
+                        {grade.course?.code ?? "—"}
                       </p>
                     </td>
+
                     <td className="px-5 py-4 text-sm">
-                      {grade.course?.credits}
+                      {grade.course?.credits ?? 0}
                     </td>
+
                     <td className="px-5 py-4 text-sm font-bold">
-                      {grade.finalScore?.toFixed(2)}
+                      {grade.finalScore !== null
+                        ? grade.finalScore.toFixed(2)
+                        : "—"}
                     </td>
+
                     <td className="px-5 py-4">
-                      <Badge variant="success">{grade.letter}</Badge>
+                      {grade.letter ? (
+                        <Badge variant="success">{grade.letter}</Badge>
+                      ) : (
+                        "—"
+                      )}
                     </td>
+
                     <td className="px-5 py-4 text-sm font-bold">
-                      {grade.weight?.toFixed(2)}
+                      {grade.weight !== null ? grade.weight.toFixed(2) : "—"}
                     </td>
+
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label="Edit nilai"
                           onClick={() => openEdit(grade)}
                         >
                           <Pencil />
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label="Hapus nilai"
                           onClick={() => {
-                            if (window.confirm("Hapus nilai ini?")) {
+                            const approved = window.confirm(
+                              `Hapus nilai ${grade.course?.name ?? "mata kuliah ini"}?`,
+                            );
+
+                            if (approved) {
                               deleteMutation.mutate(grade.id);
                             }
                           }}
@@ -284,16 +339,22 @@ export default function GradesPage() {
       <Modal
         open={modalOpen}
         title={editing ? "Edit nilai" : "Tambah nilai"}
-        description="Versi ini menerima nilai akhir langsung. Komponen berbobot dapat ditambahkan setelah alur dasar stabil."
+        description="Masukkan nilai akhir dalam rentang 0 sampai 100."
         onClose={closeModal}
       >
         <form
           className="grid gap-5"
-          onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
+          onSubmit={form.handleSubmit((values) => {
+            saveMutation.mutate(values);
+          })}
         >
-          <Field label="Mata kuliah">
+          <Field
+            label="Mata kuliah"
+            error={form.formState.errors.courseId?.message}
+          >
             <Select disabled={Boolean(editing)} {...form.register("courseId")}>
               <option value="">Pilih mata kuliah</option>
+
               {(editing ? coursesQuery.data : availableCourses)?.map(
                 (course) => (
                   <option key={course.id} value={course.id}>
@@ -304,7 +365,10 @@ export default function GradesPage() {
             </Select>
           </Field>
 
-          <Field label="Nilai akhir">
+          <Field
+            label="Nilai akhir"
+            error={form.formState.errors.finalScore?.message}
+          >
             <Input
               type="number"
               min={0}
@@ -320,8 +384,9 @@ export default function GradesPage() {
             <Button variant="outline" onClick={closeModal}>
               Batal
             </Button>
+
             <Button type="submit" disabled={saveMutation.isPending}>
-              Simpan nilai
+              {editing ? "Perbarui nilai" : "Simpan nilai"}
             </Button>
           </div>
         </form>
