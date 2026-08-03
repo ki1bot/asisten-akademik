@@ -1,5 +1,16 @@
 node_modules
-# Keep environment variables out of version control
+.pnpm-store
+.turbo
+dist
+dist-ci
+.next
+.expo
+.expo-shared
+coverage
 .env
-
-/src/generated/prisma
+.env.local
+.env.*.local
+apps/api/src/generated
+*.tsbuildinfo
+*.log
+.DS_Store

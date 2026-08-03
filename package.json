@@ -7,10 +7,19 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "pnpm --filter api test",
+    "test:e2e": "pnpm --filter api test:e2e",
+    "verify:packages": "pnpm --filter @kampushub/contracts build && pnpm --filter @kampushub/validation build && pnpm --filter @kampushub/api-client build",
+    "verify:api": "pnpm --filter api typecheck && pnpm --filter api lint && pnpm --filter api test && pnpm --filter api build",
+    "verify:web": "pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web build",
+    "verify:mobile": "pnpm --filter mobile typecheck && pnpm --filter mobile lint",
+    "verify": "pnpm verify:packages && pnpm verify:api && pnpm verify:web && pnpm verify:mobile",
     "format": "prettier --write .",
-    "db:generate": "pnpm --filter api prisma generate",
-    "db:migrate": "pnpm --filter api prisma migrate dev",
-    "db:studio": "pnpm --filter api prisma studio"
+    "db:generate": "pnpm --filter api exec prisma generate",
+    "db:migrate": "pnpm --filter api exec prisma migrate dev",
+    "db:deploy": "pnpm --filter api exec prisma migrate deploy",
+    "db:status": "pnpm --filter api exec prisma migrate status",
+    "db:studio": "pnpm --filter api exec prisma studio"
   },
   "devDependencies": {
     "eslint": "^10.8.0",

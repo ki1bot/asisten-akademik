@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kampushub_test
+          POSTGRES_USER: kampushub
+          POSTGRES_PASSWORD: kampushub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kampushub -d kampushub_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://kampushub:kampushub@localhost:5432/kampushub_test?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-kampushub-minimum-length
+      JWT_REFRESH_SECRET: ci-refresh-secret-kampushub-different-value
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 30d
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8081
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      EXPO_PUBLIC_API_URL: http://localhost:3001/api
+      DASHBOARD_UPCOMING_DAYS: 14
+      HOST: 0.0.0.0
+      PORT: 3001
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Apply database migrations
+        run: pnpm db:deploy
+
+      - name: Generate Expo routes and bundle
+        run: pnpm --filter mobile exec expo export --platform web --output-dir dist-ci
+
+      - name: Verify workspace
+        run: pnpm verify
+
+      - name: Run API integration tests
+        run: pnpm test:e2e
