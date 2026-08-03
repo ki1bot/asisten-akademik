@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: kampushub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kampushub
+      POSTGRES_USER: kampushub
+      POSTGRES_PASSWORD: kampushub
+    ports:
+      - "5432:5432"
+    volumes:
+      - kampushub_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kampushub -d kampushub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    container_name: kampushub-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - kampushub_redis_data:/data
+
+volumes:
+  kampushub_postgres_data:
+  kampushub_redis_data:

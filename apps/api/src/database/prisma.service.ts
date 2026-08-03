@@ -14,12 +14,10 @@ export class PrismaService
       throw new Error('DATABASE_URL belum dikonfigurasi');
     }
 
-    const adapter = new PrismaPg({
-      connectionString,
-    });
-
     super({
-      adapter,
+      adapter: new PrismaPg({
+        connectionString,
+      }),
     });
   }
 

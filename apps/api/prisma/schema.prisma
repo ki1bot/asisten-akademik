@@ -13,11 +13,296 @@ enum Role {
   ADMIN
 }
 
+enum SemesterType {
+  ODD
+  EVEN
+}
+
+enum LectureType {
+  OFFLINE
+  ONLINE
+  HYBRID
+}
+
+enum AssignmentStatus {
+  TODO
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  OVERDUE
+}
+
+enum AssignmentPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ExamType {
+  MIDTERM
+  FINAL
+  QUIZ
+  PRACTICUM
+  PRESENTATION
+  THESIS_DEFENSE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  PERMITTED
+  SICK
+  ABSENT
+  CANCELLED
+  REPLACEMENT
+}
+
+enum NotificationType {
+  SYSTEM
+  ASSIGNMENT
+  SCHEDULE
+  EXAM
+  ATTENDANCE
+  GRADE
+}
+
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(STUDENT)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String
+  role                Role                 @default(STUDENT)
+  emailVerifiedAt     DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  profile             Profile?
+  sessions            Session[]
+  semesters           Semester[]
+  courses             Course[]
+  schedules           Schedule[]
+  assignments         Assignment[]
+  exams               Exam[]
+  attendances         Attendance[]
+  grades              Grade[]
+  notifications       Notification[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Profile {
+  id         String @id @default(uuid())
+  userId     String @unique
+  name       String
+  studentId  String?
+  university String?
+  faculty    String?
+  major      String?
+  timezone   String @default("Asia/Jakarta")
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  deviceName       String?
+  ipAddress        String?
+  userAgent        String?
+  expiresAt        DateTime
+  lastUsedAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Semester {
+  id           String       @id @default(uuid())
+  userId       String
+  name         String
+  academicYear String
+  type         SemesterType
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses      Course[]
+
+  @@unique([userId, name, academicYear])
+  @@index([userId, isActive])
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  userId      String
+  semesterId  String
+  code        String
+  name        String
+  credits     Int
+  lecturer    String?
+  room        String?
+  color       String       @default("#4F46E5")
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semester    Semester     @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  schedules   Schedule[]
+  assignments Assignment[]
+  exams       Exam[]
+  attendances Attendance[]
+  grades      Grade[]
+
+  @@unique([userId, semesterId, code])
+  @@index([userId, semesterId])
+}
+
+model Schedule {
+  id              String      @id @default(uuid())
+  userId          String
+  courseId        String
+  dayOfWeek       Int
+  startTime       String
+  endTime         String
+  room            String?
+  lectureType     LectureType @default(OFFLINE)
+  onlineUrl       String?
+  reminderMinutes Int?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dayOfWeek])
+  @@index([courseId])
+}
+
+model Assignment {
+  id            String             @id @default(uuid())
+  userId        String
+  courseId      String
+  title         String
+  description   String?
+  deadline      DateTime
+  priority      AssignmentPriority @default(MEDIUM)
+  status        AssignmentStatus   @default(TODO)
+  attachmentUrl String?
+  reminderAt    DateTime?
+  submittedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deadline])
+  @@index([courseId])
+}
+
+model Exam {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  type       ExamType
+  title      String
+  examDate   DateTime
+  startTime  String?
+  endTime    String?
+  room       String?
+  topics     String?
+  reminderAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, examDate])
+  @@index([courseId])
+}
+
+model Attendance {
+  id          String           @id @default(uuid())
+  userId      String
+  courseId    String
+  meetingDate DateTime
+  status      AttendanceStatus
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId, meetingDate])
+  @@index([userId, meetingDate])
+}
+
+model Grade {
+  id         String           @id @default(uuid())
+  userId     String
+  courseId   String
+  finalScore Decimal?         @db.Decimal(5, 2)
+  letter     String?
+  weight     Decimal?         @db.Decimal(4, 2)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  components GradeComponent[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+model GradeComponent {
+  id        String   @id @default(uuid())
+  gradeId   String
+  name      String
+  score     Decimal  @db.Decimal(5, 2)
+  weight    Decimal  @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  grade     Grade    @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  @@index([gradeId])
+}
+
+model Notification {
+  id           String           @id @default(uuid())
+  userId       String
+  type         NotificationType @default(SYSTEM)
+  title        String
+  message      String
+  readAt       DateTime?
+  scheduledFor DateTime?
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([scheduledFor])
 }
