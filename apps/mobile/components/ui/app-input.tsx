@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { forwardRef, type ForwardedRef } from "react";
+import { forwardRef, type ForwardedRef, type ReactNode } from "react";
 import {
   StyleSheet,
   Text,
