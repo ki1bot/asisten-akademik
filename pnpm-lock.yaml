@@ -168,6 +168,15 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.3
         version: 5.4.3(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(class-transformer@0.5.1)(class-validator@0.15.1)(effect@3.20.0)(react-hook-form@7.83.0(react@19.1.0))(valibot@1.2.0(typescript@5.9.3))(zod@4.4.3)
+      '@kampushub/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@kampushub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@kampushub/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       '@react-navigation/bottom-tabs':
         specifier: ^7.4.0
         version: 7.18.14(274cc02107f40400614b202e3c17b62d)
