@@ -1,8 +1,8 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -13,22 +13,21 @@ interface ResetPasswordResponse {
   message: string;
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
-  const [token, setToken] = useState("");
+  const searchParams = useSearchParams();
+
+  const [token, setToken] = useState(() => searchParams.get("token") ?? "");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    setToken(searchParams.get("token") ?? "");
-  }, []);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!token.trim()) {
+    const normalizedToken = token.trim();
+
+    if (!normalizedToken) {
       toast.error("Token reset password wajib diisi");
       return;
     }
@@ -64,7 +63,7 @@ export default function ResetPasswordPage() {
       const response = await api.post<ResetPasswordResponse>(
         "/auth/reset-password",
         {
-          token: token.trim(),
+          token: normalizedToken,
           password,
         },
       );
@@ -136,5 +135,31 @@ export default function ResetPasswordPage() {
         </Button>
       </form>
     </div>
+  );
+}
+
+function ResetPasswordFallback() {
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4f7c6c]">
+        Password baru
+      </p>
+
+      <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#1d2d26]">
+        Pulihkan akses akun
+      </h1>
+
+      <div className="mt-8 flex items-center justify-center py-12">
+        <LoaderCircle className="size-6 animate-spin text-[#286553]" />
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
