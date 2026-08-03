@@ -5,10 +5,25 @@ import type { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 
+interface HealthResponse {
+  status: string;
+  service: string;
+  timestamp: string;
+}
+
 interface AuthenticationResponse {
   user: {
     email: string;
   };
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface ProfileResponse {
+  email: string;
+}
+
+interface TokenPairResponse {
   accessToken: string;
   refreshToken: string;
 }
@@ -46,11 +61,11 @@ describe('KampusHub API', () => {
       .get('/api/health')
       .expect(200);
 
-    expect(healthResponse.body.status).toBe('ok');
-    expect(healthResponse.body.service).toBe('kampushub-api');
-    expect(
-      Number.isNaN(Date.parse(String(healthResponse.body.timestamp))),
-    ).toBe(false);
+    const health = healthResponse.body as unknown as HealthResponse;
+
+    expect(health.status).toBe('ok');
+    expect(health.service).toBe('kampushub-api');
+    expect(Number.isNaN(Date.parse(health.timestamp))).toBe(false);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/auth/register')
@@ -62,7 +77,8 @@ describe('KampusHub API', () => {
       })
       .expect(201);
 
-    const registered = registerResponse.body as AuthenticationResponse;
+    const registered =
+      registerResponse.body as unknown as AuthenticationResponse;
 
     expect(registered.user.email).toBe(email);
     expect(typeof registered.accessToken).toBe('string');
@@ -73,7 +89,9 @@ describe('KampusHub API', () => {
       .set('Authorization', `Bearer ${registered.accessToken}`)
       .expect(200);
 
-    expect(profileResponse.body.email).toBe(email);
+    const profile = profileResponse.body as unknown as ProfileResponse;
+
+    expect(profile.email).toBe(email);
 
     const refreshResponse = await request(app.getHttpServer())
       .post('/api/auth/refresh')
@@ -82,10 +100,7 @@ describe('KampusHub API', () => {
       })
       .expect(201);
 
-    const refreshed = refreshResponse.body as Pick<
-      AuthenticationResponse,
-      'accessToken' | 'refreshToken'
-    >;
+    const refreshed = refreshResponse.body as unknown as TokenPairResponse;
 
     expect(typeof refreshed.accessToken).toBe('string');
     expect(typeof refreshed.refreshToken).toBe('string');

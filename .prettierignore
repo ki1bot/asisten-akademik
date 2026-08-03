@@ -1,0 +1,10 @@
+node_modules
+.pnpm-store
+.turbo
+dist
+dist-ci
+.next
+.expo
+.expo-shared
+coverage
+apps/api/src/generated

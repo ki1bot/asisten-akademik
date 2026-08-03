@@ -1,19 +1,29 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 
+interface BooleanTransformInput {
+  value: unknown;
+}
+
 export class NotificationQueryDto {
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === true || value === 'true') {
-      return true;
-    }
+  @Transform(
+    ({ value }: BooleanTransformInput): boolean | string | undefined => {
+      if (value === true || value === 'true') {
+        return true;
+      }
 
-    if (value === false || value === 'false') {
-      return false;
-    }
+      if (value === false || value === 'false') {
+        return false;
+      }
 
-    return value;
-  })
+      if (value === undefined || value === null || value === '') {
+        return undefined;
+      }
+
+      return String(value);
+    },
+  )
   @IsBoolean()
   unreadOnly?: boolean;
 
