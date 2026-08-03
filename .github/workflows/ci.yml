@@ -65,11 +65,20 @@ jobs:
       - name: Apply database migrations
         run: pnpm db:deploy
 
-      - name: Generate Expo routes and bundle
-        run: pnpm --filter mobile exec expo export --platform web --output-dir dist-ci
-
       - name: Verify workspace
         run: pnpm verify
+
+      - name: Verify shared package outputs
+        run: |
+          test -f packages/contracts/dist/index.js
+          test -f packages/contracts/dist/index.d.ts
+          test -f packages/validation/dist/index.js
+          test -f packages/validation/dist/index.d.ts
+          test -f packages/api-client/dist/index.js
+          test -f packages/api-client/dist/index.d.ts
+
+      - name: Generate Expo routes and bundle
+        run: pnpm --filter mobile exec expo export --platform web --output-dir dist-ci
 
       - name: Run API integration tests
         run: pnpm test:e2e

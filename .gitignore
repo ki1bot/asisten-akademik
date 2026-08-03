@@ -2,6 +2,7 @@ node_modules
 .pnpm-store
 .turbo
 dist
+dist-ci
 .next
 .expo
 .expo-shared
@@ -10,6 +11,7 @@ coverage
 .env.local
 .env.*.local
 apps/api/src/generated
-apps/api/prisma/migrations
+*.tsbuildinfo
+*.dump
 *.log
 .DS_Store
