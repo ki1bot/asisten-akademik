@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { AuthUser } from '../../common/types/auth-user.type';
+import type { AuthUser } from '../../common/types/auth-user.type';
 import { CreateGradeDto, GradeQueryDto, UpdateGradeDto } from './dto/grade.dto';
 import { GradesService } from './grades.service';
 
@@ -22,7 +22,11 @@ export class GradesController {
   constructor(private readonly gradesService: GradesService) {}
 
   @Get('scale')
-  getScale() {
+  getScale(): {
+    minimum: number;
+    letter: string;
+    weight: number;
+  }[] {
     return this.gradesService.getScale();
   }
 

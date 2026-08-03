@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { AuthUser } from '../../common/types/auth-user.type';
+import type { AuthUser } from '../../common/types/auth-user.type';
 import { AuthService } from './auth.service';
 import {
   ForgotPasswordDto,
@@ -30,8 +30,7 @@ export class AuthController {
   register(
     @Body() dto: RegisterDto,
     @Ip() ipAddress: string,
-    @Headers('user-agent')
-    userAgent?: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
     return this.authService.register(dto, {
       ipAddress,
@@ -43,8 +42,7 @@ export class AuthController {
   login(
     @Body() dto: LoginDto,
     @Ip() ipAddress: string,
-    @Headers('user-agent')
-    userAgent?: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
     return this.authService.login(dto, {
       ipAddress,
@@ -53,7 +51,10 @@ export class AuthController {
   }
 
   @Post('refresh')
-  refresh(@Body() dto: RefreshTokenDto) {
+  refresh(@Body() dto: RefreshTokenDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
     return this.authService.refresh(dto);
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuthUser } from '../../common/types/auth-user.type';
+import type { AuthUser } from '../../common/types/auth-user.type';
 import { assertOwnedResource } from '../../common/utils/ownership.util';
 import { PrismaService } from '../../database/prisma.service';
 import {
@@ -214,10 +214,11 @@ export class AssignmentsService {
     status: AssignmentStatus,
     deadline: Date,
   ): AssignmentStatus {
-    if (
-      deadline < new Date() &&
-      [AssignmentStatus.TODO, AssignmentStatus.IN_PROGRESS].includes(status)
-    ) {
+    const isPending =
+      status === AssignmentStatus.TODO ||
+      status === AssignmentStatus.IN_PROGRESS;
+
+    if (deadline < new Date() && isPending) {
       return AssignmentStatus.OVERDUE;
     }
 
