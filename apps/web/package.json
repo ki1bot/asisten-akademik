@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\"",
+    "typegen": "next typegen",
+    "typecheck": "pnpm run clean && pnpm run typegen && tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

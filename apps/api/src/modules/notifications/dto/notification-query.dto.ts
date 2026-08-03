@@ -7,23 +7,21 @@ interface BooleanTransformInput {
 
 export class NotificationQueryDto {
   @IsOptional()
-  @Transform(
-    ({ value }: BooleanTransformInput): boolean | string | undefined => {
-      if (value === true || value === 'true') {
-        return true;
-      }
+  @Transform(({ value }: BooleanTransformInput): unknown => {
+    if (value === true || value === 'true') {
+      return true;
+    }
 
-      if (value === false || value === 'false') {
-        return false;
-      }
+    if (value === false || value === 'false') {
+      return false;
+    }
 
-      if (value === undefined || value === null || value === '') {
-        return undefined;
-      }
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
 
-      return String(value);
-    },
-  )
+    return value;
+  })
   @IsBoolean()
   unreadOnly?: boolean;
 
