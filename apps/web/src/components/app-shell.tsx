@@ -103,10 +103,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     "KampusHub";
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     if (!mobileOpen) {
       return;
     }
@@ -148,6 +144,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Link
             href="/dashboard"
+            onClick={mobile ? () => setMobileOpen(false) : undefined}
             className={cn(
               "flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#3f7b67]/20",
               compact && "justify-center",
@@ -201,6 +198,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 title={compact ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
+                onClick={mobile ? () => setMobileOpen(false) : undefined}
                 className={cn(
                   "relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#3f7b67]/15",
                   active
