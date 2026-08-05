@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -17,6 +18,8 @@ interface ScreenProps {
   refreshing?: boolean;
   onRefresh?: () => void;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  maxWidth?: number;
+  includeTabBarSpacing?: boolean;
 }
 
 export function Screen({
@@ -25,15 +28,24 @@ export function Screen({
   refreshing = false,
   onRefresh,
   contentContainerStyle,
+  maxWidth = 1120,
+  includeTabBarSpacing = true,
 }: ScreenProps) {
   const { width } = useWindowDimensions();
 
-  const horizontalPadding = width < 360 ? 16 : width < 768 ? 20 : 28;
+  const horizontalPadding =
+    width < 360 ? 16 : width < 768 ? 20 : width < 1200 ? 28 : 36;
 
-  const contentStyle = [
+  const topPadding = width >= 768 ? 24 : 14;
+  const bottomPadding = includeTabBarSpacing ? 126 : 48;
+
+  const contentStyle: StyleProp<ViewStyle> = [
     styles.content,
     {
+      maxWidth,
       paddingHorizontal: horizontalPadding,
+      paddingTop: topPadding,
+      paddingBottom: bottomPadding,
     },
     contentContainerStyle,
   ];
@@ -44,6 +56,7 @@ export function Screen({
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={styles.scrollContainer}
           refreshControl={
             onRefresh ? (
@@ -85,9 +98,11 @@ const styles = StyleSheet.create({
   },
   content: {
     width: "100%",
-    maxWidth: 760,
     alignSelf: "center",
-    paddingTop: 12,
-    paddingBottom: 44,
+    ...Platform.select({
+      web: {
+        minHeight: "100%",
+      },
+    }),
   },
 });

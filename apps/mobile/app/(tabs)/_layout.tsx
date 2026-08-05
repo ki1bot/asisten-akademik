@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/loading-screen";
-import { colors, shadows } from "@/constants/app-theme";
+import { colors, radii, shadows } from "@/constants/app-theme";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const hydrated = useAuthStore((state) => state.hydrated);
   const accessToken = useAuthStore((state) => state.accessToken);
 
@@ -18,7 +20,10 @@ export default function TabLayout() {
     return <Redirect href="/login" />;
   }
 
-  const bottomPadding = Math.max(insets.bottom, 8);
+  const horizontalMargin = width < 380 ? 10 : width < 768 ? 14 : 24;
+  const tabBarWidth = Math.min(width - horizontalMargin * 2, 720);
+  const bottomOffset = Math.max(insets.bottom, 8);
+  const tabBarHeight = 66 + Math.max(insets.bottom, 4);
 
   return (
     <Tabs
@@ -27,25 +32,37 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSoft,
+        sceneStyle: {
+          backgroundColor: colors.background,
+        },
         tabBarLabelStyle: {
-          fontSize: 10,
+          marginTop: 2,
+          fontSize: width < 360 ? 9 : 10,
           lineHeight: 13,
           fontWeight: "800",
         },
         tabBarIconStyle: {
-          marginTop: 2,
+          marginTop: 3,
         },
         tabBarItemStyle: {
-          paddingTop: 5,
+          minHeight: 54,
+          paddingTop: 4,
+          borderRadius: radii.medium,
         },
         tabBarStyle: {
-          height: 62 + bottomPadding,
+          position: "absolute",
+          left: (width - tabBarWidth) / 2,
+          bottom: bottomOffset,
+          width: tabBarWidth,
+          height: tabBarHeight,
           paddingTop: 5,
-          paddingBottom: bottomPadding,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          paddingBottom: Math.max(insets.bottom, 5),
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: radii.extraLarge,
           backgroundColor: colors.surface,
-          ...shadows.soft,
+          ...shadows.elevated,
         },
       }}
     >
