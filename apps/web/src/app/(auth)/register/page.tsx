@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api, getRequestError } from "@/lib/api";
+import { getDeviceName } from "@/lib/device";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function RegisterPage() {
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     try {
       const response = await api.post<AuthResponse>("/auth/register", {
         ...values,
-        deviceName: navigator.userAgent,
+        deviceName: getDeviceName(),
       });
 
       setSession(
@@ -60,9 +61,11 @@ export default function RegisterPage() {
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4f7c6c]">
         Akun mahasiswa baru
       </p>
+
       <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#1d2d26]">
         Bangun ruang akademik Anda
       </h1>
+
       <p className="mt-3 text-sm leading-7 text-[#707b75]">
         Setelah mendaftar, buat semester aktif sebelum menambahkan mata kuliah.
       </p>

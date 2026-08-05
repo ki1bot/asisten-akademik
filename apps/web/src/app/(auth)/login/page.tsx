@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api, getRequestError } from "@/lib/api";
+import { getDeviceName } from "@/lib/device";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
@@ -30,7 +31,7 @@ export default function LoginPage() {
     try {
       const response = await api.post<AuthResponse>("/auth/login", {
         ...values,
-        deviceName: navigator.userAgent,
+        deviceName: getDeviceName(),
       });
 
       setSession(
@@ -59,9 +60,11 @@ export default function LoginPage() {
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4f7c6c]">
         Selamat datang kembali
       </p>
+
       <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#1d2d26]">
         Masuk ke KampusHub
       </h1>
+
       <p className="mt-3 text-sm leading-7 text-[#707b75]">
         Lanjutkan pengelolaan kegiatan akademik Anda dari perangkat ini.
       </p>
