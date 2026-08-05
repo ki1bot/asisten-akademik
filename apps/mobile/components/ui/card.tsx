@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, radii } from "@/constants/app-theme";
+import { colors, radii, shadows } from "@/constants/app-theme";
 
 export function Card({
   children,
@@ -18,14 +18,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.large,
     backgroundColor: colors.surface,
-    padding: 16,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 18,
-    elevation: 2,
+    padding: 17,
+    ...shadows.card,
   },
 });

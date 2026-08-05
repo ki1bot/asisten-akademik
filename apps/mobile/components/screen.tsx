@@ -3,6 +3,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
@@ -25,13 +26,25 @@ export function Screen({
   onRefresh,
   contentContainerStyle,
 }: ScreenProps) {
+  const { width } = useWindowDimensions();
+
+  const horizontalPadding = width < 360 ? 16 : width < 768 ? 20 : 28;
+
+  const contentStyle = [
+    styles.content,
+    {
+      paddingHorizontal: horizontalPadding,
+    },
+    contentContainerStyle,
+  ];
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
       {scroll ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.content, contentContainerStyle]}
+          contentContainerStyle={styles.scrollContainer}
           refreshControl={
             onRefresh ? (
               <RefreshControl
@@ -39,15 +52,16 @@ export function Screen({
                 onRefresh={onRefresh}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
+                progressBackgroundColor={colors.surface}
               />
             ) : undefined
           }
         >
-          {children}
+          <View style={contentStyle}>{children}</View>
         </ScrollView>
       ) : (
-        <View style={[styles.content, styles.flex, contentContainerStyle]}>
-          {children}
+        <View style={styles.staticContainer}>
+          <View style={[contentStyle, styles.flex]}>{children}</View>
         </View>
       )}
     </SafeAreaView>
@@ -59,12 +73,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  staticContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
   flex: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
+    width: "100%",
+    maxWidth: 760,
+    alignSelf: "center",
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 44,
   },
 });

@@ -20,20 +20,25 @@ export function Badge({
 }) {
   return (
     <View style={[styles.base, styles[`${tone}Background`], style]}>
-      <Text style={[styles.text, styles[`${tone}Text`]]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.text, styles[`${tone}Text`]]}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
+    maxWidth: "100%",
     alignSelf: "flex-start",
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: radii.round,
   },
   text: {
+    flexShrink: 1,
     fontSize: 11,
+    lineHeight: 14,
     fontWeight: "800",
   },
   neutralBackground: {

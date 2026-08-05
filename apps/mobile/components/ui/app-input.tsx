@@ -1,4 +1,4 @@
-import { forwardRef, type ForwardedRef, type ReactNode } from "react";
+import { forwardRef, useState, type ForwardedRef, type ReactNode } from "react";
 import {
   StyleSheet,
   Text,
@@ -15,20 +15,47 @@ interface AppInputProps extends TextInputProps {
 }
 
 function InputComponent(
-  { label, error, rightElement, style, ...props }: AppInputProps,
+  {
+    label,
+    error,
+    rightElement,
+    style,
+    onFocus,
+    onBlur,
+    multiline = false,
+    selectionColor,
+    ...props
+  }: AppInputProps,
   ref: ForwardedRef<TextInput>,
 ) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
 
       <View
-        style={[styles.inputWrapper, error ? styles.inputWrapperError : null]}
+        style={[
+          styles.inputWrapper,
+          focused && styles.inputWrapperFocused,
+          error ? styles.inputWrapperError : null,
+          multiline && styles.multilineWrapper,
+        ]}
       >
         <TextInput
           ref={ref}
+          multiline={multiline}
+          selectionColor={selectionColor ?? colors.primary}
           placeholderTextColor={colors.textSoft}
-          style={[styles.input, style]}
+          style={[styles.input, multiline && styles.multilineInput, style]}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
           {...props}
         />
 
@@ -47,7 +74,7 @@ export const AppInput = forwardRef(InputComponent);
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    gap: 7,
+    gap: 8,
   },
   label: {
     color: colors.text,
@@ -55,7 +82,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   inputWrapper: {
-    minHeight: 50,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -63,22 +90,39 @@ const styles = StyleSheet.create({
     borderRadius: radii.medium,
     backgroundColor: colors.surface,
   },
+  inputWrapperFocused: {
+    borderColor: colors.success,
+    backgroundColor: colors.surfaceElevated,
+  },
   inputWrapperError: {
     borderColor: colors.danger,
   },
+  multilineWrapper: {
+    minHeight: 112,
+    alignItems: "flex-start",
+  },
   input: {
-    minHeight: 48,
+    minHeight: 50,
     flex: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
     color: colors.text,
     fontSize: 15,
   },
+  multilineInput: {
+    minHeight: 108,
+    paddingTop: 14,
+    paddingBottom: 14,
+    textAlignVertical: "top",
+  },
   rightElement: {
-    paddingRight: 12,
+    alignSelf: "stretch",
+    justifyContent: "center",
+    paddingRight: 14,
   },
   error: {
     color: colors.danger,
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: "600",
   },
 });

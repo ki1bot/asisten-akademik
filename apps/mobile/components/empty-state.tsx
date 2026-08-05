@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Card } from "@/components/ui/card";
 import { colors, radii } from "@/constants/app-theme";
 
 export function EmptyState({
@@ -14,7 +15,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <View style={styles.container}>
+    <Card style={styles.container}>
       <View style={styles.icon}>{icon}</View>
 
       <Text style={styles.title}>{title}</Text>
@@ -22,7 +23,7 @@ export function EmptyState({
       <Text style={styles.description}>{description}</Text>
 
       {action ? <View style={styles.action}>{action}</View> : null}
-    </View>
+    </Card>
   );
 }
 
@@ -31,29 +32,27 @@ const styles = StyleSheet.create({
     minHeight: 240,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.large,
-    backgroundColor: colors.surface,
-    padding: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 34,
   },
   icon: {
-    width: 52,
-    height: 52,
+    width: 54,
+    height: 54,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 18,
+    borderRadius: radii.large,
     backgroundColor: colors.primaryMuted,
   },
   title: {
     marginTop: 18,
     color: colors.text,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "900",
     textAlign: "center",
   },
   description: {
-    maxWidth: 300,
+    maxWidth: 320,
     marginTop: 8,
     color: colors.textMuted,
     fontSize: 14,
@@ -61,6 +60,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   action: {
+    width: "100%",
+    maxWidth: 280,
     marginTop: 20,
   },
 });

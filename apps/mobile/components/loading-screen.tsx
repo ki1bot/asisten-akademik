@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { colors } from "@/constants/app-theme";
+import { colors, radii, shadows } from "@/constants/app-theme";
 
 export function LoadingScreen({
   message = "Menyiapkan KampusHub",
@@ -8,17 +8,18 @@ export function LoadingScreen({
 }) {
   return (
     <View style={styles.container}>
-      <View style={styles.logo}>
-        <Text style={styles.logoText}>K</Text>
+      <View style={styles.brand}>
+        <View style={styles.logo}>
+          <Text style={styles.logoText}>K</Text>
+        </View>
+
+        <Text style={styles.brandName}>KampusHub</Text>
       </View>
 
-      <ActivityIndicator
-        size="small"
-        color={colors.primary}
-        style={styles.indicator}
-      />
-
-      <Text style={styles.message}>{message}</Text>
+      <View style={styles.loadingBox}>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text style={styles.message}>{message}</Text>
+      </View>
     </View>
   );
 }
@@ -31,26 +32,45 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 24,
   },
+  brand: {
+    alignItems: "center",
+  },
   logo: {
-    width: 58,
-    height: 58,
+    width: 64,
+    height: 64,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 20,
+    borderRadius: radii.large,
     backgroundColor: colors.primary,
+    ...shadows.elevated,
   },
   logoText: {
     color: colors.white,
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: "900",
   },
-  indicator: {
-    marginTop: 24,
+  brandName: {
+    marginTop: 14,
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: -0.6,
+  },
+  loadingBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.medium,
+    backgroundColor: colors.surface,
   },
   message: {
-    marginTop: 12,
     color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

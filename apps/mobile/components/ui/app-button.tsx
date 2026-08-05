@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { colors, radii } from "@/constants/app-theme";
+import { colors, radii, shadows } from "@/constants/app-theme";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost";
 
@@ -33,12 +33,19 @@ export function AppButton({
 }: AppButtonProps) {
   const inactive = disabled || loading;
 
+  const indicatorColor =
+    variant === "primary" || variant === "danger"
+      ? colors.white
+      : colors.primary;
+
   return (
     <Pressable
+      accessibilityRole="button"
       disabled={inactive}
       style={({ pressed }) => [
         styles.base,
         styles[variant],
+        variant === "primary" && styles.primaryShadow,
         fullWidth && styles.fullWidth,
         pressed && !inactive && styles.pressed,
         inactive && styles.disabled,
@@ -47,21 +54,13 @@ export function AppButton({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={
-            variant === "outline" ||
-            variant === "ghost" ||
-            variant === "secondary"
-              ? colors.primary
-              : colors.white
-          }
-        />
+        <ActivityIndicator size="small" color={indicatorColor} />
       ) : (
         leftIcon
       )}
 
       <Text
+        numberOfLines={1}
         style={[
           styles.text,
           variant === "outline" && styles.outlineText,
@@ -77,23 +76,26 @@ export function AppButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 46,
+    minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 19,
     borderRadius: radii.medium,
   },
   primary: {
     backgroundColor: colors.primary,
+  },
+  primaryShadow: {
+    ...shadows.soft,
   },
   secondary: {
     backgroundColor: colors.primaryMuted,
   },
   outline: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
   },
   danger: {
@@ -103,9 +105,11 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   text: {
+    flexShrink: 1,
     color: colors.white,
     fontSize: 14,
     fontWeight: "800",
+    textAlign: "center",
   },
   outlineText: {
     color: colors.text,
@@ -120,10 +124,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   pressed: {
-    opacity: 0.82,
+    opacity: 0.88,
     transform: [
       {
-        scale: 0.99,
+        scale: 0.985,
       },
     ],
   },

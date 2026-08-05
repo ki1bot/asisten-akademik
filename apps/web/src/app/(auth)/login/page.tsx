@@ -51,17 +51,17 @@ export default function LoginPage() {
     <div>
       <Link
         href="/"
-        className="mb-10 inline-flex items-center gap-2 text-sm font-semibold text-[#64716a] hover:text-[#173c34] lg:hidden"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-[#64716a] transition hover:text-[#173c34] lg:hidden"
       >
         <ArrowLeft className="size-4" />
         Kembali
       </Link>
 
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4f7c6c]">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4f7c6c] sm:text-xs">
         Selamat datang kembali
       </p>
 
-      <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#1d2d26]">
+      <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-[-0.05em] text-[#1d2d26] sm:text-4xl">
         Masuk ke KampusHub
       </h1>
 

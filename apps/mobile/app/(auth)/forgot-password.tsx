@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -15,7 +16,7 @@ import { useRouter } from "expo-router";
 import { z } from "zod";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
-import { colors } from "@/constants/app-theme";
+import { colors, shadows } from "@/constants/app-theme";
 import { api, getRequestError } from "@/lib/api";
 
 const schema = z.object({
@@ -70,68 +71,93 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Pressable style={styles.back} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </Pressable>
-
-        <View style={styles.heading}>
-          <Text style={styles.eyebrow}>PEMULIHAN AKUN</Text>
-          <Text style={styles.title}>Lupa password</Text>
-          <Text style={styles.description}>
-            Masukkan email akun untuk membuat token penggantian password.
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <Controller
-            control={form.control}
-            name="email"
-            render={({ field, fieldState }) => (
-              <AppInput
-                label="Email"
-                placeholder="nama@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                value={field.value}
-                error={fieldState.error?.message}
-                onBlur={field.onBlur}
-                onChangeText={field.onChange}
-              />
-            )}
-          />
-
-          <AppButton
-            title="Buat token reset"
-            loading={form.formState.isSubmitting}
-            fullWidth
-            onPress={onSubmit}
-          />
-        </View>
-
-        <Pressable
-          style={styles.resetLink}
-          onPress={() => router.push("/reset-password")}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <Text style={styles.resetLinkText}>Sudah memiliki token reset?</Text>
-        </Pressable>
+          <View style={styles.container}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Kembali"
+              style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={22} color={colors.text} />
+            </Pressable>
+
+            <View style={styles.heading}>
+              <Text style={styles.eyebrow}>PEMULIHAN AKUN</Text>
+              <Text style={styles.title}>Lupa password</Text>
+              <Text style={styles.description}>
+                Masukkan email akun untuk membuat token penggantian password.
+              </Text>
+            </View>
+
+            <View style={styles.formCard}>
+              <Controller
+                control={form.control}
+                name="email"
+                render={({ field, fieldState }) => (
+                  <AppInput
+                    label="Email"
+                    placeholder="nama@email.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    value={field.value}
+                    error={fieldState.error?.message}
+                    onBlur={field.onBlur}
+                    onChangeText={field.onChange}
+                  />
+                )}
+              />
+
+              <AppButton
+                title="Buat token reset"
+                loading={form.formState.isSubmitting}
+                fullWidth
+                onPress={onSubmit}
+              />
+            </View>
+
+            <Pressable
+              style={styles.resetLink}
+              onPress={() => router.push("/reset-password")}
+            >
+              <Text style={styles.resetLinkText}>
+                Sudah memiliki token reset?
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
-    flex: 1,
+    width: "100%",
+    maxWidth: 560,
+    flexGrow: 1,
+    alignSelf: "center",
     paddingHorizontal: 24,
     paddingTop: 12,
+    paddingBottom: 36,
   },
   back: {
     width: 44,
@@ -142,9 +168,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 15,
     backgroundColor: colors.surface,
+    ...shadows.soft,
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [
+      {
+        scale: 0.97,
+      },
+    ],
   },
   heading: {
-    marginTop: 54,
+    marginTop: 46,
   },
   eyebrow: {
     color: colors.success,
@@ -155,7 +190,8 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 12,
     color: colors.text,
-    fontSize: 36,
+    fontSize: 34,
+    lineHeight: 40,
     fontWeight: "900",
     letterSpacing: -1.5,
   },
@@ -165,13 +201,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
   },
-  form: {
-    marginTop: 36,
+  formCard: {
     gap: 20,
+    marginTop: 32,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    ...shadows.card,
   },
   resetLink: {
     alignSelf: "center",
     marginTop: 26,
+    padding: 8,
   },
   resetLinkText: {
     color: colors.success,

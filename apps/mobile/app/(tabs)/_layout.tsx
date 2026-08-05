@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/loading-screen";
-import { colors } from "@/constants/app-theme";
+import { colors, shadows } from "@/constants/app-theme";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   const hydrated = useAuthStore((state) => state.hydrated);
   const accessToken = useAuthStore((state) => state.accessToken);
 
@@ -16,6 +18,8 @@ export default function TabLayout() {
     return <Redirect href="/login" />;
   }
 
+  const bottomPadding = Math.max(insets.bottom, 8);
+
   return (
     <Tabs
       screenOptions={{
@@ -25,15 +29,23 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textSoft,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: "700",
-          marginBottom: 4,
+          lineHeight: 13,
+          fontWeight: "800",
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingTop: 5,
         },
         tabBarStyle: {
-          height: 68,
-          paddingTop: 7,
+          height: 62 + bottomPadding,
+          paddingTop: 5,
+          paddingBottom: bottomPadding,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.surface,
+          ...shadows.soft,
         },
       }}
     >
@@ -41,8 +53,12 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Ringkasan",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -51,8 +67,12 @@ export default function TabLayout() {
         name="agenda"
         options={{
           title: "Agenda",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "calendar" : "calendar-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -61,8 +81,12 @@ export default function TabLayout() {
         name="assignments"
         options={{
           title: "Tugas",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "checkbox" : "checkbox-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -71,8 +95,12 @@ export default function TabLayout() {
         name="academics"
         options={{
           title: "Akademik",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="school-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "school" : "school-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -81,8 +109,12 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Akun",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

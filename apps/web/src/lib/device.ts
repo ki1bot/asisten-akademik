@@ -59,9 +59,8 @@ export function getDeviceName(): string {
     return "Perangkat web";
   }
 
-  const userAgent = navigator.userAgent;
-  const browserName = getBrowserName(userAgent);
-  const operatingSystem = getOperatingSystem(userAgent);
+  const browserName = getBrowserName(navigator.userAgent);
+  const operatingSystem = getOperatingSystem(navigator.userAgent);
 
   return `${browserName} di ${operatingSystem}`.slice(0, 100);
 }
