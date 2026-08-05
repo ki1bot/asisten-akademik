@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, getRequestError } from "@/lib/api";
 import { getDeviceName } from "@/lib/device";
 import { useAuthStore } from "@/stores/auth-store";
@@ -70,20 +71,32 @@ export default function LoginPage() {
       </p>
 
       <form className="mt-8 grid gap-5" onSubmit={onSubmit}>
-        <Field label="Email" error={form.formState.errors.email?.message}>
+        <Field
+          htmlFor="login-email"
+          label="Email"
+          error={form.formState.errors.email?.message}
+        >
           <Input
+            id="login-email"
             type="email"
             autoComplete="email"
+            inputMode="email"
             placeholder="nama@email.com"
+            aria-invalid={Boolean(form.formState.errors.email)}
             {...form.register("email")}
           />
         </Field>
 
-        <Field label="Password" error={form.formState.errors.password?.message}>
-          <Input
-            type="password"
+        <Field
+          htmlFor="login-password"
+          label="Password"
+          error={form.formState.errors.password?.message}
+        >
+          <PasswordInput
+            id="login-password"
             autoComplete="current-password"
             placeholder="Minimal 8 karakter"
+            aria-invalid={Boolean(form.formState.errors.password)}
             {...form.register("password")}
           />
         </Field>

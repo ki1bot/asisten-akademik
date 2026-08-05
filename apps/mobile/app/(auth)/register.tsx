@@ -15,9 +15,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
+import { AppPasswordInput } from "@/components/ui/app-password-input";
 import { colors } from "@/constants/app-theme";
 import { api, getRequestError } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
@@ -25,7 +25,6 @@ import { useAuthStore } from "@/stores/auth-store";
 export default function RegisterScreen() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
-  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -61,13 +60,20 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable style={styles.back} onPress={() => router.back()}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kembali"
+            style={styles.back}
+            onPress={() => router.back()}
+          >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
 
           <View style={styles.heading}>
             <Text style={styles.eyebrow}>AKUN MAHASISWA BARU</Text>
+
             <Text style={styles.title}>Mulai mengatur kegiatan kuliah</Text>
+
             <Text style={styles.description}>
               Buat akun untuk menyimpan seluruh aktivitas akademik pada satu
               ruang kerja.
@@ -83,6 +89,8 @@ export default function RegisterScreen() {
                   label="Nama lengkap"
                   placeholder="Nama mahasiswa"
                   autoComplete="name"
+                  textContentType="name"
+                  returnKeyType="next"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
@@ -100,7 +108,10 @@ export default function RegisterScreen() {
                   placeholder="nama@email.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoCorrect={false}
                   autoComplete="email"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
@@ -113,28 +124,22 @@ export default function RegisterScreen() {
               control={form.control}
               name="password"
               render={({ field, fieldState }) => (
-                <AppInput
+                <AppPasswordInput
                   label="Password"
+                  helperText="Gunakan huruf besar, huruf kecil, dan angka."
                   placeholder="Huruf besar, kecil, dan angka"
-                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  autoCorrect={false}
                   autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="done"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
                   onChangeText={field.onChange}
-                  rightElement={
-                    <Pressable
-                      hitSlop={12}
-                      onPress={() => setShowPassword((current) => !current)}
-                    >
-                      <Ionicons
-                        name={showPassword ? "eye-off-outline" : "eye-outline"}
-                        size={21}
-                        color={colors.textMuted}
-                      />
-                    </Pressable>
-                  }
+                  onSubmitEditing={() => {
+                    void onSubmit();
+                  }}
                 />
               )}
             />
@@ -150,7 +155,10 @@ export default function RegisterScreen() {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Sudah memiliki akun?</Text>
 
-            <Pressable onPress={() => router.replace("/login")}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => router.replace("/login")}
+            >
               <Text style={styles.footerLink}>Masuk</Text>
             </Pressable>
           </View>
@@ -170,6 +178,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 36,
@@ -213,6 +224,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
     gap: 5,
     marginTop: 28,

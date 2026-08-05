@@ -13,10 +13,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
 import { z } from "zod";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
+import { AppPasswordInput } from "@/components/ui/app-password-input";
 import { colors } from "@/constants/app-theme";
 import { api, getRequestError } from "@/lib/api";
 
@@ -43,8 +43,6 @@ export default function ResetPasswordScreen() {
   const params = useLocalSearchParams<{
     token?: string;
   }>();
-
-  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -86,13 +84,20 @@ export default function ResetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable style={styles.back} onPress={() => router.back()}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kembali"
+            style={styles.back}
+            onPress={() => router.back()}
+          >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
 
           <View style={styles.heading}>
             <Text style={styles.eyebrow}>PASSWORD BARU</Text>
+
             <Text style={styles.title}>Pulihkan akses akun</Text>
+
             <Text style={styles.description}>
               Masukkan token reset dan password baru yang kuat.
             </Text>
@@ -107,6 +112,8 @@ export default function ResetPasswordScreen() {
                   label="Token reset"
                   placeholder="Tempel token reset"
                   autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
@@ -119,27 +126,19 @@ export default function ResetPasswordScreen() {
               control={form.control}
               name="password"
               render={({ field, fieldState }) => (
-                <AppInput
+                <AppPasswordInput
                   label="Password baru"
+                  helperText="Gunakan huruf besar, huruf kecil, dan angka."
                   placeholder="Huruf besar, kecil, dan angka"
-                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="next"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
                   onChangeText={field.onChange}
-                  rightElement={
-                    <Pressable
-                      hitSlop={12}
-                      onPress={() => setShowPassword((current) => !current)}
-                    >
-                      <Ionicons
-                        name={showPassword ? "eye-off-outline" : "eye-outline"}
-                        size={21}
-                        color={colors.textMuted}
-                      />
-                    </Pressable>
-                  }
                 />
               )}
             />
@@ -148,15 +147,21 @@ export default function ResetPasswordScreen() {
               control={form.control}
               name="confirmation"
               render={({ field, fieldState }) => (
-                <AppInput
+                <AppPasswordInput
                   label="Konfirmasi password"
                   placeholder="Ulangi password baru"
-                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="done"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
                   onChangeText={field.onChange}
+                  onSubmitEditing={() => {
+                    void onSubmit();
+                  }}
                 />
               )}
             />
@@ -184,6 +189,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 36,

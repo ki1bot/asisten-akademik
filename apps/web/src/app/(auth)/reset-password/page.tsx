@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, getRequestError } from "@/lib/api";
 
 interface ResetPasswordResponse {
@@ -92,8 +93,9 @@ function ResetPasswordForm() {
       </p>
 
       <form className="mt-8 grid gap-5" onSubmit={handleSubmit}>
-        <Field label="Token reset">
+        <Field htmlFor="reset-token" label="Token reset">
           <Input
+            id="reset-token"
             required
             autoComplete="off"
             value={token}
@@ -102,9 +104,13 @@ function ResetPasswordForm() {
           />
         </Field>
 
-        <Field label="Password baru">
-          <Input
-            type="password"
+        <Field
+          htmlFor="reset-password"
+          label="Password baru"
+          hint="Minimal 8 karakter"
+        >
+          <PasswordInput
+            id="reset-password"
             required
             autoComplete="new-password"
             value={password}
@@ -113,9 +119,9 @@ function ResetPasswordForm() {
           />
         </Field>
 
-        <Field label="Konfirmasi password">
-          <Input
-            type="password"
+        <Field htmlFor="reset-confirmation" label="Konfirmasi password">
+          <PasswordInput
+            id="reset-confirmation"
             required
             autoComplete="new-password"
             value={confirmation}

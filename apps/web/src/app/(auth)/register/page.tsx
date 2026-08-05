@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, getRequestError } from "@/lib/api";
 import { getDeviceName } from "@/lib/device";
 import { useAuthStore } from "@/stores/auth-store";
@@ -71,28 +72,47 @@ export default function RegisterPage() {
       </p>
 
       <form className="mt-8 grid gap-5" onSubmit={onSubmit}>
-        <Field label="Nama lengkap" error={form.formState.errors.name?.message}>
+        <Field
+          htmlFor="register-name"
+          label="Nama lengkap"
+          error={form.formState.errors.name?.message}
+        >
           <Input
+            id="register-name"
             autoComplete="name"
             placeholder="Nama mahasiswa"
+            aria-invalid={Boolean(form.formState.errors.name)}
             {...form.register("name")}
           />
         </Field>
 
-        <Field label="Email" error={form.formState.errors.email?.message}>
+        <Field
+          htmlFor="register-email"
+          label="Email"
+          error={form.formState.errors.email?.message}
+        >
           <Input
+            id="register-email"
             type="email"
             autoComplete="email"
+            inputMode="email"
             placeholder="nama@email.com"
+            aria-invalid={Boolean(form.formState.errors.email)}
             {...form.register("email")}
           />
         </Field>
 
-        <Field label="Password" error={form.formState.errors.password?.message}>
-          <Input
-            type="password"
+        <Field
+          htmlFor="register-password"
+          label="Password"
+          hint="Minimal 8 karakter"
+          error={form.formState.errors.password?.message}
+        >
+          <PasswordInput
+            id="register-password"
             autoComplete="new-password"
             placeholder="Huruf besar, kecil, dan angka"
+            aria-invalid={Boolean(form.formState.errors.password)}
             {...form.register("password")}
           />
         </Field>

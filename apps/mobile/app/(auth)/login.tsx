@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AuthResponse } from "@kampushub/contracts";
 import { loginSchema, type LoginInput } from "@kampushub/validation";
-import { Ionicons } from "@expo/vector-icons";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -15,9 +14,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
+import { AppPasswordInput } from "@/components/ui/app-password-input";
 import { colors } from "@/constants/app-theme";
 import { api, getRequestError } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
@@ -25,7 +24,6 @@ import { useAuthStore } from "@/stores/auth-store";
 export default function LoginScreen() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
-  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -70,7 +68,9 @@ export default function LoginScreen() {
 
           <View style={styles.heading}>
             <Text style={styles.eyebrow}>SELAMAT DATANG KEMBALI</Text>
+
             <Text style={styles.title}>Masuk ke ruang akademik Anda</Text>
+
             <Text style={styles.description}>
               Pantau jadwal, tugas, ujian, presensi, dan nilai dari satu
               aplikasi.
@@ -87,7 +87,10 @@ export default function LoginScreen() {
                   placeholder="nama@email.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoCorrect={false}
                   autoComplete="email"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
@@ -100,33 +103,27 @@ export default function LoginScreen() {
               control={form.control}
               name="password"
               render={({ field, fieldState }) => (
-                <AppInput
+                <AppPasswordInput
                   label="Password"
                   placeholder="Minimal 8 karakter"
-                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  autoCorrect={false}
                   autoComplete="current-password"
+                  textContentType="password"
+                  returnKeyType="done"
                   value={field.value}
                   error={fieldState.error?.message}
                   onBlur={field.onBlur}
                   onChangeText={field.onChange}
-                  rightElement={
-                    <Pressable
-                      hitSlop={12}
-                      onPress={() => setShowPassword((current) => !current)}
-                    >
-                      <Ionicons
-                        name={showPassword ? "eye-off-outline" : "eye-outline"}
-                        size={21}
-                        color={colors.textMuted}
-                      />
-                    </Pressable>
-                  }
+                  onSubmitEditing={() => {
+                    void onSubmit();
+                  }}
                 />
               )}
             />
 
             <Pressable
+              accessibilityRole="link"
               style={styles.forgotButton}
               onPress={() => router.push("/forgot-password")}
             >
@@ -144,7 +141,10 @@ export default function LoginScreen() {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Belum memiliki akun?</Text>
 
-            <Pressable onPress={() => router.push("/register")}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => router.push("/register")}
+            >
               <Text style={styles.footerLink}>Daftar sekarang</Text>
             </Pressable>
           </View>
@@ -164,6 +164,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 36,
@@ -222,6 +225,7 @@ const styles = StyleSheet.create({
   forgotButton: {
     alignSelf: "flex-end",
     marginTop: -5,
+    paddingVertical: 4,
   },
   linkText: {
     color: colors.success,
@@ -230,6 +234,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
     gap: 5,
     marginTop: 28,
