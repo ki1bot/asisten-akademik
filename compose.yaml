@@ -139,6 +139,14 @@ services:
       - "${EXPO_PORT:-8081}:8081"
     stdin_open: true
     tty: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent http://127.0.0.1:8081/status | grep -q "packager-status:running"
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
 
 volumes:
   postgres_data:

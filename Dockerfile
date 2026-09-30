@@ -1,8 +1,5 @@
 FROM node:22-bookworm-slim AS development
 
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -12,29 +9,29 @@ RUN apt-get update \
         make \
         openssl \
         python3 \
-    && rm -rf /var/lib/apt/lists/* \
-    && corepack enable \
-    && corepack prepare pnpm@11.20.0 --activate
+    && npm install --global pnpm@11.20.0 \
+    && npm cache clean --force \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+RUN chown node:node /workspace
 
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/web/package.json ./apps/web/package.json
-COPY apps/mobile/package.json ./apps/mobile/package.json
+USER node
 
-COPY packages/contracts/package.json ./packages/contracts/package.json
-COPY packages/validation/package.json ./packages/validation/package.json
-COPY packages/api-client/package.json ./packages/api-client/package.json
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+COPY --chown=node:node apps/api/package.json ./apps/api/package.json
+COPY --chown=node:node apps/web/package.json ./apps/web/package.json
+COPY --chown=node:node apps/mobile/package.json ./apps/mobile/package.json
+
+COPY --chown=node:node packages/contracts/package.json ./packages/contracts/package.json
+COPY --chown=node:node packages/validation/package.json ./packages/validation/package.json
+COPY --chown=node:node packages/api-client/package.json ./packages/api-client/package.json
 
 RUN pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
-
-RUN chown -R node:node /workspace
-
-USER node
 
 EXPOSE 3000
 EXPOSE 3001
