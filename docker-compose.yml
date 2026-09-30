@@ -1,31 +1,231 @@
+name: asisten-akademik
+
+x-node-build: &node-build
+  context: .
+  dockerfile: Dockerfile
+  target: development
+
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: kampushub-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: kampushub
-      POSTGRES_USER: kampushub
-      POSTGRES_PASSWORD: kampushub
+      POSTGRES_DB: ${POSTGRES_DB:-kampushub}
+      POSTGRES_USER: ${POSTGRES_USER:-kampushub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kampushub}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
-      - kampushub_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kampushub -d kampushub"]
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-kampushub} -d ${POSTGRES_DB:-kampushub}
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 10s
 
   redis:
     image: redis:8-alpine
-    container_name: kampushub-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6380}:6379"
     volumes:
-      - kampushub_redis_data:/data
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  api:
+    image: asisten-akademik-api:dev
+    build: *node-build
+    init: true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kampushub}:${POSTGRES_PASSWORD:-kampushub}@postgres:5432/${POSTGRES_DB:-kampushub}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-kampushub-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-kampushub-change-me}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8081}
+      DASHBOARD_UPCOMING_DAYS: ${DASHBOARD_UPCOMING_DAYS:-14}
+      HOST: 0.0.0.0
+      PORT: 3001
+      NODE_ENV: development
+    command:
+      - sh
+      - -c
+      - >
+        pnpm --filter @kampushub/contracts build &&
+        pnpm --filter @kampushub/validation build &&
+        pnpm --filter @kampushub/api-client build &&
+        pnpm db:generate &&
+        pnpm db:deploy &&
+        pnpm --filter api dev
+    ports:
+      - "${API_PORT:-3001}:3001"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api/src
+          target: /workspace/apps/api/src
+          initial_sync: true
+          ignore:
+            - generated/
+        - action: sync+restart
+          path: ./apps/api/prisma
+          target: /workspace/apps/api/prisma
+          initial_sync: true
+        - action: sync+restart
+          path: ./packages
+          target: /workspace/packages
+          initial_sync: true
+          ignore:
+            - "**/node_modules/"
+            - "**/dist/"
+        - action: rebuild
+          path: ./apps/api/package.json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+        - action: rebuild
+          path: ./pnpm-workspace.yaml
+
+  web:
+    image: asisten-akademik-web:dev
+    build: *node-build
+    init: true
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: development
+    command:
+      - sh
+      - -c
+      - >
+        pnpm --filter @kampushub/contracts build &&
+        pnpm --filter @kampushub/validation build &&
+        pnpm --filter @kampushub/api-client build &&
+        pnpm --filter web exec next dev -H 0.0.0.0 -p 3000
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent http://127.0.0.1:3000 > /dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web/src
+          target: /workspace/apps/web/src
+          initial_sync: true
+        - action: sync
+          path: ./apps/web/public
+          target: /workspace/apps/web/public
+          initial_sync: true
+        - action: sync+restart
+          path: ./apps/web/next.config.ts
+          target: /workspace/apps/web/next.config.ts
+          initial_sync: true
+        - action: sync+restart
+          path: ./packages
+          target: /workspace/packages
+          initial_sync: true
+          ignore:
+            - "**/node_modules/"
+            - "**/dist/"
+        - action: rebuild
+          path: ./apps/web/package.json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+        - action: rebuild
+          path: ./pnpm-workspace.yaml
+
+  mobile:
+    image: asisten-akademik-mobile:dev
+    build: *node-build
+    init: true
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://10.0.2.2:3001/api}
+      EXPO_PACKAGER_PROXY_URL: http://${EXPO_DEV_HOST:-10.0.2.2}:${EXPO_PORT:-8081}
+      NODE_ENV: development
+      TERM: xterm-256color
+    command:
+      - sh
+      - -c
+      - >
+        pnpm --filter @kampushub/contracts build &&
+        pnpm --filter @kampushub/validation build &&
+        pnpm --filter @kampushub/api-client build &&
+        pnpm --filter mobile exec expo start --lan --port 8081
+    ports:
+      - "${EXPO_PORT:-8081}:8081"
+    stdin_open: true
+    tty: true
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/mobile
+          target: /workspace/apps/mobile
+          initial_sync: true
+          ignore:
+            - node_modules/
+            - .expo/
+            - package.json
+            - app.json
+        - action: sync+restart
+          path: ./apps/mobile/app.json
+          target: /workspace/apps/mobile/app.json
+          initial_sync: true
+        - action: sync+restart
+          path: ./packages
+          target: /workspace/packages
+          initial_sync: true
+          ignore:
+            - "**/node_modules/"
+            - "**/dist/"
+        - action: rebuild
+          path: ./apps/mobile/package.json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+        - action: rebuild
+          path: ./pnpm-workspace.yaml
 
 volumes:
-  kampushub_postgres_data:
-  kampushub_redis_data:
+  postgres_data:
+  redis_data:
