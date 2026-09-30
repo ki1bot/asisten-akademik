@@ -8,7 +8,7 @@ x-node-build: &node-build
 services:
   postgres:
     image: postgres:18-alpine
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-kampushub}
       POSTGRES_USER: ${POSTGRES_USER:-kampushub}
@@ -28,7 +28,7 @@ services:
 
   redis:
     image: redis:8-alpine
-    restart: unless-stopped
+    restart: always
     ports:
       - "${REDIS_PORT:-6380}:6379"
     volumes:
@@ -47,7 +47,7 @@ services:
     image: asisten-akademik-api:dev
     build: *node-build
     init: true
-    restart: unless-stopped
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,39 +82,12 @@ services:
       timeout: 5s
       retries: 15
       start_period: 30s
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/api/src
-          target: /workspace/apps/api/src
-          initial_sync: true
-          ignore:
-            - generated/
-        - action: sync+restart
-          path: ./apps/api/prisma
-          target: /workspace/apps/api/prisma
-          initial_sync: true
-        - action: sync+restart
-          path: ./packages
-          target: /workspace/packages
-          initial_sync: true
-          ignore:
-            - "**/node_modules/"
-            - "**/dist/"
-        - action: rebuild
-          path: ./apps/api/package.json
-        - action: rebuild
-          path: ./package.json
-        - action: rebuild
-          path: ./pnpm-lock.yaml
-        - action: rebuild
-          path: ./pnpm-workspace.yaml
 
   web:
     image: asisten-akademik-web:dev
     build: *node-build
     init: true
-    restart: unless-stopped
+    restart: always
     depends_on:
       api:
         condition: service_healthy
@@ -140,41 +113,12 @@ services:
       timeout: 5s
       retries: 15
       start_period: 30s
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/web/src
-          target: /workspace/apps/web/src
-          initial_sync: true
-        - action: sync
-          path: ./apps/web/public
-          target: /workspace/apps/web/public
-          initial_sync: true
-        - action: sync+restart
-          path: ./apps/web/next.config.ts
-          target: /workspace/apps/web/next.config.ts
-          initial_sync: true
-        - action: sync+restart
-          path: ./packages
-          target: /workspace/packages
-          initial_sync: true
-          ignore:
-            - "**/node_modules/"
-            - "**/dist/"
-        - action: rebuild
-          path: ./apps/web/package.json
-        - action: rebuild
-          path: ./package.json
-        - action: rebuild
-          path: ./pnpm-lock.yaml
-        - action: rebuild
-          path: ./pnpm-workspace.yaml
 
   mobile:
     image: asisten-akademik-mobile:dev
     build: *node-build
     init: true
-    restart: unless-stopped
+    restart: always
     depends_on:
       api:
         condition: service_healthy
@@ -195,36 +139,6 @@ services:
       - "${EXPO_PORT:-8081}:8081"
     stdin_open: true
     tty: true
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/mobile
-          target: /workspace/apps/mobile
-          initial_sync: true
-          ignore:
-            - node_modules/
-            - .expo/
-            - package.json
-            - app.json
-        - action: sync+restart
-          path: ./apps/mobile/app.json
-          target: /workspace/apps/mobile/app.json
-          initial_sync: true
-        - action: sync+restart
-          path: ./packages
-          target: /workspace/packages
-          initial_sync: true
-          ignore:
-            - "**/node_modules/"
-            - "**/dist/"
-        - action: rebuild
-          path: ./apps/mobile/package.json
-        - action: rebuild
-          path: ./package.json
-        - action: rebuild
-          path: ./pnpm-lock.yaml
-        - action: rebuild
-          path: ./pnpm-workspace.yaml
 
 volumes:
   postgres_data:
