@@ -27,6 +27,8 @@ dist-ci
 coverage
 **/coverage
 
+apps/api
+
 .env
 **/.env
 .env.*

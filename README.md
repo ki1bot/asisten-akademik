@@ -4,7 +4,7 @@ KampusHub adalah platform produktivitas akademik untuk mengelola semester, mata 
 
 ## Struktur
 
-- `apps/api`: NestJS, Prisma, PostgreSQL, JWT, Passport, Argon2, Swagger
+- `apps/api`: Go, Gin, GORM, PostgreSQL, JWT, Argon2id
 - `apps/web`: Next.js, React, TypeScript, Tailwind CSS, TanStack Query
 - `apps/mobile`: Expo, React Native, Expo Router, Secure Store
 - `packages/contracts`: kontrak tipe bersama
@@ -13,13 +13,16 @@ KampusHub adalah platform produktivitas akademik untuk mengelola semester, mata 
 
 ## Persyaratan
 
-- Node.js
+- Go 1.27
+- Node.js 22 atau lebih baru
 - pnpm 11
+- Docker Desktop
 - PostgreSQL
 - Expo Go untuk pengujian pada ponsel
 
-## Instalasi
+## Menjalankan dengan Docker
+
+Jalankan dari root project:
 
 ```bash
-pnpm install
-```
+docker compose up -d --build
