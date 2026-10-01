@@ -21,7 +21,6 @@ USER node
 
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-COPY --chown=node:node apps/api/package.json ./apps/api/package.json
 COPY --chown=node:node apps/web/package.json ./apps/web/package.json
 COPY --chown=node:node apps/mobile/package.json ./apps/mobile/package.json
 
@@ -34,7 +33,6 @@ RUN pnpm install --frozen-lockfile
 COPY --chown=node:node . .
 
 EXPOSE 3000
-EXPOSE 3001
 EXPOSE 8081
 
 CMD ["pnpm", "dev"]
