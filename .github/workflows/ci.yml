@@ -11,90 +11,152 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_DB: kampushub_test
-          POSTGRES_USER: kampushub
-          POSTGRES_PASSWORD: kampushub
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U kampushub -d kampushub_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-    env:
-      DATABASE_URL: postgresql://kampushub:kampushub@localhost:5432/kampushub_test?sslmode=disable
-      JWT_ACCESS_SECRET: ci-access-secret-kampushub-minimum-length
-      JWT_REFRESH_SECRET: ci-refresh-secret-kampushub-different-value
-      JWT_ACCESS_EXPIRES_IN: 15m
-      JWT_REFRESH_EXPIRES_IN: 30d
-      CORS_ORIGINS: http://localhost:3000,http://localhost:8081
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
-      EXPO_PUBLIC_API_URL: http://localhost:3001/api
-      DASHBOARD_UPCOMING_DAYS: 14
-      HOST: 0.0.0.0
-      PORT: 3001
-      APP_ENV: test
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: "1.27"
-          cache-dependency-path: apps/api/go.sum
-
-      - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install PostgreSQL client
+      - name: Show Docker versions
         run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          docker --version
+          docker compose version
 
-      - name: Apply database migrations
+      - name: Validate Docker Compose
         run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f apps/api/prisma/migrations/20260726161333_init/migration.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f apps/api/prisma/migrations/20260803172740_initial_asistenakademik/migration.sql
+          docker compose --profile verify config > /dev/null
 
-      - name: Install Go dependencies
-        working-directory: apps/api
-        run: go mod download
+      - name: Build verification images
+        run: |
+          docker compose --profile verify build api-verify frontend-verify
 
       - name: Verify Go backend
-        working-directory: apps/api
         run: |
-          go vet ./...
-          go test ./...
-          go build ./...
+          docker compose --profile verify run --rm api-verify
 
       - name: Verify frontend workspace
-        run: pnpm verify
-
-      - name: Verify shared package outputs
         run: |
-          test -f packages/contracts/dist/index.js
-          test -f packages/contracts/dist/index.d.ts
-          test -f packages/validation/dist/index.js
-          test -f packages/validation/dist/index.d.ts
-          test -f packages/api-client/dist/index.js
-          test -f packages/api-client/dist/index.d.ts
+          docker compose --profile verify run --rm frontend-verify
 
-      - name: Generate Expo routes and bundle
-        run: pnpm --filter mobile exec expo export --platform web --output-dir dist-ci
+      - name: Stop verification services
+        if: always()
+        run: |
+          docker compose --profile verify down --remove-orphans
+
+      - name: Build and start runtime stack
+        run: |
+          docker compose up -d --build
+
+      - name: Wait for runtime health checks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          wait_for_health() {
+            service="$1"
+            attempts=90
+
+            echo "Waiting for $service..."
+
+            for attempt in $(seq 1 "$attempts"); do
+              container_id="$(docker compose ps -q "$service")"
+
+              if [ -z "$container_id" ]; then
+                echo "$service container has not been created yet"
+                sleep 2
+                continue
+              fi
+
+              status="$(docker inspect \
+                --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \
+                "$container_id")"
+
+              echo "$service: $status"
+
+              if [ "$status" = "healthy" ]; then
+                return 0
+              fi
+
+              if [ "$status" = "unhealthy" ] || [ "$status" = "exited" ]; then
+                echo "$service failed"
+                docker logs "$container_id" || true
+                return 1
+              fi
+
+              sleep 2
+            done
+
+            echo "$service did not become healthy in time"
+            docker compose logs --no-color "$service" || true
+            return 1
+          }
+
+          wait_for_health postgres
+          wait_for_health redis
+          wait_for_health api
+          wait_for_health web
+          wait_for_health mobile
+
+      - name: Verify migration result
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          migrate_id="$(docker compose ps -a -q migrate)"
+
+          if [ -z "$migrate_id" ]; then
+            echo "Migration container was not found"
+            exit 1
+          fi
+
+          exit_code="$(docker inspect \
+            --format='{{.State.ExitCode}}' \
+            "$migrate_id")"
+
+          echo "Migration exit code: $exit_code"
+
+          if [ "$exit_code" != "0" ]; then
+            docker logs "$migrate_id" || true
+            exit 1
+          fi
+
+      - name: Verify API endpoint
+        run: |
+          curl --fail --silent --show-error \
+            http://127.0.0.1:3001/api/health
+
+      - name: Verify web endpoint
+        run: |
+          curl --fail --silent --show-error \
+            http://127.0.0.1:3000 \
+            > /dev/null
+
+      - name: Verify Expo development server
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          response="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            http://127.0.0.1:8081/status)"
+
+          echo "$response"
+
+          echo "$response" | grep -q "packager-status:running"
+
+      - name: Show Docker status
+        if: always()
+        run: |
+          docker compose ps -a
+
+      - name: Show Docker logs on failure
+        if: failure()
+        run: |
+          docker compose logs --no-color || true
+
+      - name: Stop runtime stack
+        if: always()
+        run: |
+          docker compose down --remove-orphans

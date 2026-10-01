@@ -17,6 +17,19 @@ x-api-environment: &api-environment
   HOST: 0.0.0.0
   PORT: 3001
 
+x-api-test-environment: &api-test-environment
+  DATABASE_URL: postgresql://kampushub:kampushub@postgres-test:5432/kampushub_test?sslmode=disable
+  JWT_ACCESS_SECRET: ci-access-secret-kampushub-minimum-length
+  JWT_REFRESH_SECRET: ci-refresh-secret-kampushub-different-value
+  JWT_ACCESS_EXPIRES_IN: 15m
+  JWT_REFRESH_EXPIRES_IN: 30d
+  CORS_ORIGINS: http://localhost:3000,http://localhost:8081
+  GRADE_SCALE: ""
+  DASHBOARD_UPCOMING_DAYS: 14
+  HOST: 0.0.0.0
+  PORT: 3001
+  APP_ENV: test
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -160,6 +173,43 @@ services:
       retries: 20
       start_period: 60s
 
+  postgres-test:
+    profiles:
+      - verify
+    image: postgres:18-alpine
+    restart: "no"
+    environment:
+      POSTGRES_DB: kampushub_test
+      POSTGRES_USER: kampushub
+      POSTGRES_PASSWORD: kampushub
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U kampushub -d kampushub_test
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  migrate-test:
+    profiles:
+      - verify
+    image: postgres:18-alpine
+    restart: "no"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://kampushub:kampushub@postgres-test:5432/kampushub_test?sslmode=disable
+    volumes:
+      - ./apps/api/migrate.sh:/migrate.sh:ro
+      - ./apps/api/prisma/migrations:/migrations:ro
+    entrypoint:
+      - /bin/sh
+      - /migrate.sh
+
   api-verify:
     profiles:
       - verify
@@ -171,11 +221,10 @@ services:
     init: true
     restart: "no"
     depends_on:
-      migrate:
+      migrate-test:
         condition: service_completed_successfully
     environment:
-      <<: *api-environment
-      APP_ENV: test
+      <<: *api-test-environment
 
   frontend-verify:
     profiles:
@@ -188,8 +237,8 @@ services:
     init: true
     restart: "no"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
-      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://10.0.2.2:3001/api}
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      EXPO_PUBLIC_API_URL: http://10.0.2.2:3001/api
       NEXT_TELEMETRY_DISABLED: "1"
       CI: "1"
 
