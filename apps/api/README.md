@@ -1,114 +1,27 @@
 # KampusHub API
 
-Backend API Asisten Akademik menggunakan Go, Gin, GORM, PostgreSQL, Argon2id, dan JWT.
+Backend API KampusHub menggunakan Go, Gin, GORM, PostgreSQL, Argon2id, dan JWT.
 
-## Teknologi
+## Runtime
 
-- Go
-- Gin
-- GORM
-- PostgreSQL
-- Argon2id
-- JWT
+Backend dijalankan melalui Docker.
 
-## Menjalankan dengan Docker Compose
-
-Jalankan perintah dari root project:
+Dari root project:
 
 ```bash
 docker compose up -d --build
 ```
 
-Periksa seluruh service:
+Periksa:
 
 ```bash
 docker compose ps
 ```
 
-API berjalan di:
+API tersedia di:
 
 ```text
 http://localhost:3001/api
-```
-
-Web berjalan di:
-
-```text
-http://localhost:3000
-```
-
-Expo development server berjalan di:
-
-```text
-http://localhost:8081
-```
-
-Health check API:
-
-```bash
-curl http://localhost:3001/api/health
-```
-
-Contoh response:
-
-```json
-{
-  "service": "kampushub-api",
-  "status": "ok",
-  "timestamp": "2026-10-01T13:33:45.236990594Z"
-}
-```
-
-## Menjalankan Backend Go Secara Lokal
-
-Backend Go membutuhkan PostgreSQL.
-
-Dari root project, nyalakan PostgreSQL terlebih dahulu:
-
-```bash
-docker compose up -d postgres redis
-```
-
-Periksa statusnya:
-
-```bash
-docker compose ps
-```
-
-PostgreSQL harus berstatus:
-
-```text
-healthy
-```
-
-Jalankan migration:
-
-```bash
-docker compose run --rm migrate
-```
-
-Kemudian masuk ke backend:
-
-```bash
-cd apps/api
-```
-
-Download dependency:
-
-```bash
-go mod download
-```
-
-Jalankan backend:
-
-```bash
-go run .
-```
-
-API akan berjalan di:
-
-```text
-http://localhost:3001
 ```
 
 Health check:
@@ -117,93 +30,236 @@ Health check:
 curl http://localhost:3001/api/health
 ```
 
-## Verifikasi Backend
+Response normal:
 
-Dari folder:
-
-```text
-apps/api
-```
-
-jalankan:
-
-```bash
-go mod tidy
-go fmt ./...
-go vet ./...
-go test ./...
-go build -o ./bin/api.exe .
-```
-
-Binary hasil build akan berada di:
-
-```text
-apps/api/bin/api.exe
-```
-
-Folder `bin` tidak disimpan ke Git.
-
-Jika hanya ingin memeriksa apakah source dapat dikompilasi tanpa menyimpan binary permanen, hapus binary setelah build:
-
-```bash
-rm -f ./bin/api.exe
-```
-
-## Menjalankan Verifikasi dari Root Project
-
-Jika terminal sedang berada di root project, jangan menjalankan:
-
-```bash
-go mod download
-```
-
-karena file `go.mod` berada di:
-
-```text
-apps/api
-```
-
-Gunakan:
-
-```bash
-go -C apps/api mod download
-```
-
-Untuk format:
-
-```bash
-go -C apps/api fmt ./...
-```
-
-Untuk vet:
-
-```bash
-go -C apps/api vet ./...
-```
-
-Untuk test:
-
-```bash
-go -C apps/api test ./...
-```
-
-Untuk build:
-
-```bash
-mkdir -p apps/api/bin
-go -C apps/api build -o ./bin/api.exe .
+```json
+{
+  "service": "kampushub-api",
+  "status": "ok",
+  "timestamp": "..."
+}
 ```
 
 ## Database
 
-Pada environment Docker Compose, API terhubung ke PostgreSQL menggunakan:
+Backend terhubung ke PostgreSQL melalui Docker network menggunakan:
 
 ```text
-postgresql://kampushub:kampushub@postgres:5432/kampushub?sslmode=disable
+postgres:5432
 ```
 
-Ketika backend Go dijalankan langsung dari Windows, koneksi menggunakan:
+Database default:
 
 ```text
-postgresql://kampushub:kampushub@localhost:5433/kampushub?sslmode=disable
+Database : kampushub
+Username : kampushub
+Password : kampushub
+```
+
+PostgreSQL dari host tersedia pada:
+
+```text
+localhost:5433
+```
+
+## Migration
+
+Migration otomatis dijalankan oleh service:
+
+```text
+migrate
+```
+
+sebelum service API dijalankan.
+
+Menjalankan migration secara manual:
+
+```bash
+docker compose run --rm migrate
+```
+
+Migration SQL berada di:
+
+```text
+apps/api/prisma/migrations
+```
+
+Folder tersebut hanya menjadi lokasi migration SQL.
+
+Prisma ORM tidak digunakan oleh backend Go.
+
+## Verifikasi Backend
+
+Tidak diperlukan instalasi Go pada Windows.
+
+Build verifier dari root project:
+
+```bash
+docker compose --profile verify build api-verify
+```
+
+Jalankan:
+
+```bash
+docker compose --profile verify run --rm api-verify
+```
+
+Verifier menjalankan:
+
+```text
+gofmt check
+go vet ./...
+go test ./...
+go build
+```
+
+Jika container selesai dengan exit code `0`, backend lolos verifikasi.
+
+## Log API
+
+```bash
+docker compose logs -f api
+```
+
+Keluar menggunakan `Ctrl+C`.
+
+API tetap berjalan di background.
+
+## Restart API
+
+```bash
+docker compose restart api
+```
+
+Jika source backend berubah:
+
+```bash
+docker compose up -d --build api
+```
+
+Karena service API menggunakan binary Go yang dibangun di dalam image, perubahan source membutuhkan rebuild image.
+
+## PostgreSQL Shell
+
+```bash
+docker compose exec postgres psql -U kampushub -d kampushub
+```
+
+Keluar:
+
+```text
+\q
+```
+
+## Endpoint
+
+Health:
+
+```text
+GET /api/health
+```
+
+Authentication:
+
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/refresh
+POST   /api/auth/forgot-password
+POST   /api/auth/reset-password
+POST   /api/auth/verify-email
+POST   /api/auth/logout
+POST   /api/auth/logout-all
+GET    /api/auth/me
+GET    /api/auth/sessions
+DELETE /api/auth/sessions/:id
+```
+
+Semester:
+
+```text
+GET    /api/semesters
+GET    /api/semesters/:id
+POST   /api/semesters
+PATCH  /api/semesters/:id
+DELETE /api/semesters/:id
+```
+
+Mata kuliah:
+
+```text
+GET    /api/courses
+GET    /api/courses/:id
+POST   /api/courses
+PATCH  /api/courses/:id
+DELETE /api/courses/:id
+```
+
+Jadwal:
+
+```text
+GET    /api/schedules
+GET    /api/schedules/:id
+POST   /api/schedules
+PATCH  /api/schedules/:id
+DELETE /api/schedules/:id
+```
+
+Tugas:
+
+```text
+GET    /api/assignments
+GET    /api/assignments/:id
+POST   /api/assignments
+PATCH  /api/assignments/:id
+DELETE /api/assignments/:id
+```
+
+Ujian:
+
+```text
+GET    /api/exams
+GET    /api/exams/:id
+POST   /api/exams
+PATCH  /api/exams/:id
+DELETE /api/exams/:id
+```
+
+Presensi:
+
+```text
+GET    /api/attendances
+GET    /api/attendances/summary
+GET    /api/attendances/:id
+POST   /api/attendances
+PATCH  /api/attendances/:id
+DELETE /api/attendances/:id
+```
+
+Nilai:
+
+```text
+GET    /api/grades
+GET    /api/grades/scale
+GET    /api/grades/gpa
+GET    /api/grades/:id
+POST   /api/grades
+PATCH  /api/grades/:id
+DELETE /api/grades/:id
+```
+
+Notifikasi:
+
+```text
+GET    /api/notifications
+GET    /api/notifications/unread-count
+PATCH  /api/notifications/read-all
+PATCH  /api/notifications/:id/read
+DELETE /api/notifications/:id
+```
+
+Dashboard:
+
+```text
+GET /api/dashboard
 ```

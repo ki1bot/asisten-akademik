@@ -5,6 +5,18 @@ x-node-build: &node-build
   dockerfile: Dockerfile
   target: development
 
+x-api-environment: &api-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:-kampushub}:${POSTGRES_PASSWORD:-kampushub}@postgres:5432/${POSTGRES_DB:-kampushub}?sslmode=disable
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-kampushub-change-me}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-kampushub-change-me}
+  JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+  JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8081}
+  GRADE_SCALE: ${GRADE_SCALE:-}
+  DASHBOARD_UPCOMING_DAYS: ${DASHBOARD_UPCOMING_DAYS:-14}
+  HOST: 0.0.0.0
+  PORT: 3001
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -63,22 +75,14 @@ services:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
+      target: runtime
     init: true
     restart: "no"
     depends_on:
       migrate:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kampushub}:${POSTGRES_PASSWORD:-kampushub}@postgres:5432/${POSTGRES_DB:-kampushub}?sslmode=disable
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-kampushub-change-me}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-kampushub-change-me}
-      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
-      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8081}
-      GRADE_SCALE: ${GRADE_SCALE:-}
-      DASHBOARD_UPCOMING_DAYS: ${DASHBOARD_UPCOMING_DAYS:-14}
-      HOST: 0.0.0.0
-      PORT: 3001
+      <<: *api-environment
       APP_ENV: development
     ports:
       - "${API_PORT:-3001}:3001"
@@ -155,6 +159,39 @@ services:
       timeout: 5s
       retries: 20
       start_period: 60s
+
+  api-verify:
+    profiles:
+      - verify
+    image: asisten-akademik-api-verify:dev
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: verify
+    init: true
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *api-environment
+      APP_ENV: test
+
+  frontend-verify:
+    profiles:
+      - verify
+    image: asisten-akademik-frontend-verify:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: verify
+    init: true
+    restart: "no"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://10.0.2.2:3001/api}
+      NEXT_TELEMETRY_DISABLED: "1"
+      CI: "1"
 
 volumes:
   postgres_data:

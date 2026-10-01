@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS development
+FROM node:22-bookworm-slim AS base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -31,6 +31,14 @@ COPY --chown=node:node packages/api-client/package.json ./packages/api-client/pa
 RUN pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
+
+FROM base AS verify
+
+ENV CI=1
+
+CMD ["sh", "-c", "pnpm verify && pnpm --filter mobile exec expo export --platform web --output-dir dist-ci"]
+
+FROM base AS development
 
 EXPOSE 3000
 EXPOSE 8081
